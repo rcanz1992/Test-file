@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Event Tracker - Grata</title>
+  <style>
+    /* Basic styling for the page */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 8px;
+      text-align: left;
+      border: 1px solid #ddd;
+    }
+    button {
+      margin-top: 10px;
+      padding: 5px 15px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    .filter {
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+
+<h2>Event Tracker</h2>
+
+<!-- Filter Input -->
+<input type="text" id="filterInput" class="filter" placeholder="Filter by Event Name..." oninput="filterTable()">
+
+<!-- Table for displaying the data -->
+<table id="eventTable">
+  <thead>
+    <tr>
+      <th>UID</th>
+      <th>Country</th>
+      <th>Previous Event Name</th>
+      <th>Current Website</th>
+      <th>Start Date</th>
+      <th>End Date</th>
+      <th>Assigned To</th>
+      <th>Status</th>
+      <th>Note</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <!-- Data rows will be inserted here -->
+  </tbody>
+</table>
+
+<!-- Add New Event Button -->
+<button onclick="createNewEvent()">Add New Event</button>
+
+<script>
+  const scriptURL = 'YOUR_SCRIPT_URL_HERE'; // Replace with your Apps Script Web App URL
+
+  // Fetch data from the Google Sheet and populate the table
+  function loadData() {
+    fetch(`${scriptURL}?action=read`)
+      .then(res => res.json())
+      .then(data => {
+        const tbody = document.querySelector("#eventTable tbody");
+        tbody.innerHTML = ''; // Clear any existing rows
+        data.forEach(row => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${row[0]}</td>
+            <td>${row[1]}</td>
+            <td>${row[2]}</td>
+            <td><a href="${row[3]}" target="_blank">${row[3]}</a></td>
+            <td>${row[4]}</td>
+            <td>${row[5]}</td>
+            <td>${row[6]}</td>
+            <td>${row[7]}</td>
+            <td>${row[8]}</td>
+            <td>
+              <button onclick="editEvent('${row[0]}')">Edit</button>
+              <button onclick="deleteEvent('${row[0]}')">Delete</button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      });
+  }
+
+  // Filter table by event name
+  function filterTable() {
+    const filter = document.getElementById('filterInput').value.toLowerCase();
+    const rows = document.querySelectorAll("#eventTable tbody tr");
+    rows.forEach(row => {
+      const eventName = row.cells[2].textContent.toLowerCase();
+      row.style.display = eventName.includes(filter) ? "" : "none";
+    });
+  }
+
+  // Add a new event
+  function createNewEvent() {
+    const params = new URLSearchParams({
+      action: "create",
+      uid: "newUID",
+      country: "USA",
+      previous_event_name: "New Event",
+      current_website: "http://example.com",
+      start_date: "2025-01-01",
+      end_date: "2025-01-02",
+      assigned_to: "Assigned Person",
+      status: "Pending",
+      note: "New event description"
+    });
+
+    fetch(`${scriptURL}?${params.toString()}`, { method: 'POST' })
+      .then(res => res.text())
+      .then(() => loadData()); // Reload the data after adding
+  }
+
+  // Edit an event
+  function editEvent(uid) {
+    // Logic to edit event (open a form or similar)
+    alert(`Editing event with UID: ${uid}`);
+  }
+
+  // Delete an event
+  function deleteEvent(uid) {
+    const params = new URLSearchParams({
+      action: "delete",
+      uid: uid
+    });
+
+    fetch(`${scriptURL}?${params.toString()}`, { method: 'POST' })
+      .then(res => res.text())
+      .then(() => loadData()); // Reload the data after deletion
+  }
+
+  // Initial load of data when page loads
+  window.onload = loadData;
+</script>
+
+</body>
+</html>
